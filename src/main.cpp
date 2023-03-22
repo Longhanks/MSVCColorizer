@@ -1,30 +1,23 @@
-#include <algorithm>
-#include <iterator>
-#include <memory>
-#include <string>
-#include <vector>
+#include "cmdline.h"
+#include "consolecp.h"
+#include "utfconvert.h"
 
 // WINAPI
 #pragma warning(push)
-#pragma warning(disable : 5039)
+#pragma warning(disable : 5039)  // pointer or reference to potentially throwing function passed to 'extern "C"'
 #include <Windows.h>
 #pragma warning(pop)
 
-// CommandLineToArgvW
-#include <shellapi.h>
-
-// MSVCRT
-#include <fcntl.h>
-#include <io.h>
-
 // Tool Help Library
 #pragma warning(push)
-#pragma warning(disable : 4820)
+#pragma warning(disable : 4820)  // padding
 #include <TlHelp32.h>
 #pragma warning(pop)
 
-// PSAPI
-#include <Psapi.h>
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <vector>
 
 constexpr static size_t PIPE_BUFSIZE = 128;
 
@@ -50,39 +43,6 @@ constexpr static size_t PIPE_BUFSIZE = 128;
            line.substr(index_note + 7);
   }
   return line;
-}
-
-/*!
- * @brief Convert UTF-8 std::string to UTF-16 std::wstring
- * @param utf8 UTF-8 encoded std::string
- * @return UTF-16 encoded std::wstring
- */
-[[nodiscard]] std::wstring utf16_from_utf8(const std::string& utf8) {
-  size_t utf16_bufsize = static_cast<size_t>(static_cast<unsigned int>(MultiByteToWideChar(
-      CP_UTF8, 0, utf8.c_str(), static_cast<int>(static_cast<ptrdiff_t>(std::size(utf8))), nullptr, 0)));
-  auto str = std::make_unique_for_overwrite<wchar_t[]>(utf16_bufsize + 1);
-  utf16_bufsize = static_cast<size_t>(
-      static_cast<ptrdiff_t>(MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), static_cast<int>(std::size(utf8)), str.get(),
-                                                 static_cast<int>(static_cast<ptrdiff_t>(utf16_bufsize + 1)))));
-  str[utf16_bufsize] = 0;
-  return str.get();
-}
-
-/*!
- * @brief Convert UTF-16 std::wstring to UTF-8 std::string
- * @param utf16 UTF-16 encoded std::wstring
- * @return UTF-8 encoded std::string
- */
-[[nodiscard]] std::string utf8_from_utf16(const std::wstring& utf16) {
-  size_t utf8_bufsize = static_cast<size_t>(static_cast<ptrdiff_t>(
-      WideCharToMultiByte(CP_UTF8, 0, utf16.c_str(), static_cast<int>(static_cast<ptrdiff_t>(std::size(utf16))),
-                          nullptr, 0, nullptr, nullptr)));
-  auto str = std::make_unique_for_overwrite<char[]>(utf8_bufsize + 1);
-  utf8_bufsize = static_cast<size_t>(static_cast<ptrdiff_t>(
-      WideCharToMultiByte(CP_UTF8, 0, utf16.c_str(), static_cast<int>(static_cast<ptrdiff_t>(std::size(utf16))),
-                          str.get(), static_cast<int>(static_cast<ptrdiff_t>(utf8_bufsize + 1)), nullptr, nullptr)));
-  str[utf8_bufsize] = 0;
-  return str.get();
 }
 
 [[nodiscard]] DWORD parent_of_pid(DWORD pid) {
@@ -185,7 +145,7 @@ void do_print(std::string str, bool to_stderr = false) {
  * @brief Format a readable error message, display a message box, and exit from the application.
  * @param prefix UTF-8 encoded std::string used as prefix
  */
-void print_error_and_exit(std::string prefix) {
+[[noreturn]] void print_error_and_exit(std::string prefix) {
   void* msg = nullptr;
   void* msg_wchar = &msg;
   const DWORD dw = GetLastError();
@@ -210,48 +170,6 @@ void print_error_and_exit(std::string prefix) {
   ExitProcess(EXIT_FAILURE);
 }
 
-class ConsoleCPRestorator final {
- public:
-  explicit ConsoleCPRestorator() : m_old_cp(GetConsoleCP()), m_old_output_cp(GetConsoleOutputCP()) {
-    // needed to make caller processes aware that this tool outputs UTF-8 to stdout
-    SetConsoleCP(CP_UTF8);
-    // Needed to make called processes inherit UTF-8 so that this is what arrives at this tool's stdout pipe
-    SetConsoleOutputCP(CP_UTF8);
-
-    DWORD console_mode = 0;
-    const bool is_console = GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &console_mode) != 0;
-    if (is_console) {
-      m_old_console_mode = console_mode;
-      SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE),
-                     console_mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT);
-    } else {
-      m_old_stdout_mode = _setmode(_fileno(stdout), _O_BINARY);
-    }
-  }
-
-  ConsoleCPRestorator(const ConsoleCPRestorator&) = delete;
-  ConsoleCPRestorator& operator=(const ConsoleCPRestorator&) = delete;
-  ConsoleCPRestorator(ConsoleCPRestorator&&) noexcept = delete;
-  ConsoleCPRestorator& operator=(ConsoleCPRestorator&&) noexcept = delete;
-
-  ~ConsoleCPRestorator() {
-    if (m_old_stdout_mode != -1) {
-      _setmode(_fileno(stdout), m_old_stdout_mode);
-    }
-    if (m_old_console_mode != 0) {
-      SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), m_old_console_mode);
-    }
-    SetConsoleOutputCP(m_old_output_cp);
-    SetConsoleCP(m_old_cp);
-  }
-
- private:
-  UINT m_old_cp;
-  UINT m_old_output_cp;
-  DWORD m_old_console_mode = 0;
-  int m_old_stdout_mode = -1;
-};
-
 int main(int argc, char* argv[]) {
   (void)argc;
   (void)argv;
@@ -263,34 +181,19 @@ int main(int argc, char* argv[]) {
     print_error_and_exit("GetCommandLineW");
   }
 
-  int argc_w = 0;
-  wchar_t** argv_w = CommandLineToArgvW(cmdline, &argc_w);
-  if (argv_w == nullptr) {
-    LocalFree(argv_w);
-    print_error_and_exit("CommandLineToArgvW");
-  }
-  if (argc_w <= 1) {
-    LocalFree(argv_w);
-    do_print("Not enough arguments: Give me a program\n", true);
-    ExitProcess(1);
-  }
+  const auto [cmdline_calc_offset_result, cmdline_skip] = calculate_offset(cmdline);
 
-  std::wstring cmdline_str(cmdline);
-  const size_t idx_argv0 = cmdline_str.find(argv_w[0]);
-  const size_t cmdline_skip = [cmdline, argv_w, idx_argv0]() -> size_t {
-    size_t cmdline_skip_ = wcslen(argv_w[0]) + (2 * idx_argv0) + 1;
-    while (cmdline[cmdline_skip_] == L' ') {
-      cmdline_skip_ += 1;
+  switch (cmdline_calc_offset_result) {
+    case CmdLineCalcOffsetResult::commandLineToArgvWFailed: {
+      print_error_and_exit("CommandLineToArgvW");
     }
-    return cmdline_skip_;
-  }();
-
-  LocalFree(argv_w);
-
-  const size_t cmdline_len = std::size(cmdline_str) - cmdline_skip;
-  auto cmdline_mut = std::make_unique_for_overwrite<wchar_t[]>(cmdline_len + 1);
-  std::copy_n((cmdline + cmdline_skip), cmdline_len, cmdline_mut.get());
-  cmdline_mut[cmdline_len] = 0;
+    case CmdLineCalcOffsetResult::notEnoughArguments: {
+      do_print("Not enough arguments: Give me a program\n", true);
+      ExitProcess(1);
+    }
+    case CmdLineCalcOffsetResult::success: {
+    }
+  }
 
   SECURITY_ATTRIBUTES security_attributes;
   security_attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -341,15 +244,15 @@ int main(int argc, char* argv[]) {
 
   // Create the child process.
   create_process_success = CreateProcessW(nullptr,
-                                          cmdline_mut.get(),      // command line
-                                          nullptr,                // process security attributes
-                                          nullptr,                // primary thread security attributes
-                                          TRUE,                   // handles are inherited
-                                          0,                      // creation flags
-                                          nullptr,                // use parent's environment
-                                          nullptr,                // use parent's current directory
-                                          &startup_info,          // STARTUPINFO pointer
-                                          &process_information);  // receives PROCESS_INFORMATION
+                                          cmdline + cmdline_skip,  // command line
+                                          nullptr,                 // process security attributes
+                                          nullptr,                 // primary thread security attributes
+                                          TRUE,                    // handles are inherited
+                                          0,                       // creation flags
+                                          nullptr,                 // use parent's environment
+                                          nullptr,                 // use parent's current directory
+                                          &startup_info,           // STARTUPINFO pointer
+                                          &process_information);   // receives PROCESS_INFORMATION
 
   // If an error occurs, exit the application.
   if (create_process_success == FALSE) {

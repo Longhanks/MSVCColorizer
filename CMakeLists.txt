@@ -11,7 +11,13 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 project(cpp_playground LANGUAGES CXX)
 
-add_executable(MSVCColorizer main.cpp MSVCColorizer.manifest)
+add_executable(MSVCColorizer
+  src/cmdline.cpp
+  src/consolecp.cpp
+  src/main.cpp
+  src/utfconvert.cpp
+  MSVCColorizer.manifest
+)
 
 set_target_properties(MSVCColorizer
   PROPERTIES
@@ -19,16 +25,18 @@ set_target_properties(MSVCColorizer
     CXX_EXTENSIONS            OFF
     CXX_STANDARD_REQUIRED      ON
     POSITION_INDEPENDENT_CODE  ON
+    EXPORT_COMPILE_COMMANDS    ON
 )
 
 target_compile_definitions(MSVCColorizer
   PUBLIC
-    -DWIN32_LEAN_AND_MEAN
-    -DVC_EXTRALEAN
     -D_WIN32_IE=0x0A00          # _WIN32_IE_WIN10
     -D_WIN32_WINNT=0x0A00       # _WIN32_WINNT_WIN10
     -DNTDDI_VERSION=0x0A00000B  # NTDDI_WIN10_CO
     -DWINVER=0x0A00             # _WIN32_WINNT_WIN10
+  PRIVATE
+    -DWIN32_LEAN_AND_MEAN
+    -DVC_EXTRALEAN
 )
 
 if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
@@ -37,6 +45,10 @@ if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
       -D_ITERATOR_DEBUG_LEVEL=2
       -DDEBUG
       -D_DEBUG
+  )
+  target_compile_options(MSVCColorizer
+    PRIVATE
+      /fsanitize=address
   )
 elseif("${BUILD_TYPE_ALL_CAPS}" STREQUAL "RELEASE")
   target_compile_definitions(MSVCColorizer
@@ -49,8 +61,10 @@ target_compile_options(MSVCColorizer
   PRIVATE
     /Zc:__cplusplus
     /utf-8
-    /Wall
     /diagnostics:caret
+    /Wall
+    /wd4710 # function not inlined despite inline
+    /wd4711 # function inlined despite no inline
 )
 
 target_link_libraries(MSVCColorizer
