@@ -15,6 +15,7 @@ add_executable(MSVCColorizer
   src/cmdline.cpp
   src/consolecp.cpp
   src/main.cpp
+  src/printlasterror.cpp
   src/utfconvert.cpp
   MSVCColorizer.manifest
 )
