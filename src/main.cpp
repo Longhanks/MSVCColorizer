@@ -1,6 +1,7 @@
 #include "cmdline.h"
 #include "consolecp.h"
 #include "printlasterror.h"
+#include "processline.h"
 #include "utfconvert.h"
 
 // WINAPI
@@ -15,40 +16,6 @@
 #include <vector>
 
 constexpr static size_t PIPE_BUFSIZE = 4096;
-
-[[nodiscard]] std::string colorize_line(const std::string& line) {
-  const size_t index_warning = line.find(": warning C");
-  if (index_warning != std::string::npos) {
-    return line.substr(0, index_warning + 2) + "\033[33m" + line.substr(index_warning + 2, 14) + "\033[0m" +
-           line.substr(index_warning + 16);
-  }
-  const size_t index_fatal_error = line.find(": fatal error C");
-  if (index_fatal_error != std::string::npos) {
-    return line.substr(0, index_fatal_error + 2) + "\033[31m" + line.substr(index_fatal_error, 18) + "\033[0m" +
-           line.substr(index_fatal_error + 20);
-  }
-  const size_t index_error = line.find(": error C");
-  if (index_error != std::string::npos) {
-    return line.substr(0, index_error + 2) + "\033[31m" + line.substr(index_error + 2, 12) + "\033[0m" +
-           line.substr(index_error + 14);
-  }
-  const size_t index_note = line.find(": note:");
-  if (index_note != std::string::npos) {
-    return line.substr(0, index_note + 2) + "\033[35m" + line.substr(index_note + 2, 5) + "\033[0m" +
-           line.substr(index_note + 7);
-  }
-  return line;
-}
-
-/*!
- * @brief Colorize warnings and errors and write UTF-8 using WriteFile
- * @param str UTF-8 encoded std::string
- * @param out_handle The STD_OUTPUT_HANDLE
- */
-void process_line(std::string&& str, HANDLE out) {
-  const std::string processed = colorize_line(str);
-  WriteFile(out, processed.c_str(), static_cast<DWORD>(std::size(processed)), nullptr, nullptr);
-}
 
 int main(int argc, char* argv[]) {
   (void)argc;
@@ -113,24 +80,17 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  // Create the child process.
-  PROCESS_INFORMATION process_information;
-  STARTUPINFOW startup_info;
-  BOOL create_process_success = FALSE;
-
-  // Set up members of the PROCESS_INFORMATION structure.
-  ZeroMemory(&process_information, sizeof(PROCESS_INFORMATION));
-
-  // Set up members of the STARTUPINFO structure.
-  // This structure specifies the STDIN and STDOUT handles for redirection.
-  ZeroMemory(&startup_info, sizeof(STARTUPINFOW));
+  STARTUPINFOW startup_info = {};
   startup_info.cb = sizeof(STARTUPINFOW);
   startup_info.hStdError = pipe_stdout_write;
   startup_info.hStdOutput = pipe_stdout_write;
   startup_info.hStdInput = pipe_stdin_read;
   startup_info.dwFlags |= STARTF_USESTDHANDLES;
+  
+  PROCESS_INFORMATION process_information = {};
 
   // Create the child process.
+  BOOL create_process_success = FALSE;
   create_process_success = CreateProcessW(nullptr,
                                           cmdline + cmdline_skip,  // command line
                                           nullptr,                 // process security attributes
