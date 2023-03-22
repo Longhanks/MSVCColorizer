@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 
   wchar_t* cmdline = GetCommandLineW();
   if (cmdline == nullptr) {
-    print_last_error("GetCommandLineW", sizeof("GetCommandLineW"));
+    print_last_error("GetCommandLineW", sizeof("GetCommandLineW") - 1);
     return EXIT_FAILURE;
   }
 
@@ -33,13 +33,13 @@ int main(int argc, char* argv[]) {
 
   switch (cmdline_calc_offset_result) {
     case CmdLineCalcOffsetResult::commandLineToArgvWFailed: {
-      print_last_error("CommandLineToArgvW", sizeof("CommandLineToArgvW"));
+      print_last_error("CommandLineToArgvW", sizeof("CommandLineToArgvW") - 1);
       return EXIT_FAILURE;
     }
     case CmdLineCalcOffsetResult::notEnoughArguments: {
       HANDLE handle_stderr = GetStdHandle(STD_ERROR_HANDLE);
       WriteFile(handle_stderr, "Not enough arguments: Give me a program\n",
-                sizeof("Not enough arguments: Give me a program\n"), nullptr, nullptr);
+                sizeof("Not enough arguments: Give me a program\n") - 1, nullptr, nullptr);
       return EXIT_FAILURE;
     }
     case CmdLineCalcOffsetResult::success: {
@@ -58,25 +58,27 @@ int main(int argc, char* argv[]) {
 
   // Create a pipe for the child process's STDOUT.
   if (CreatePipe(&pipe_stdout_read, &pipe_stdout_write, &security_attributes, 0) == FALSE) {
-    print_last_error("CreatePipe for stdout", sizeof("CreatePipe for stdout"));
+    print_last_error("CreatePipe for stdout", sizeof("CreatePipe for stdout") - 1);
     return EXIT_FAILURE;
   }
 
   // Ensure the read handle to the pipe for STDOUT is not inherited.
   if (SetHandleInformation(pipe_stdout_read, HANDLE_FLAG_INHERIT, 0) == FALSE) {
-    print_last_error("SetHandleInformation for stdout read pipe", sizeof("SetHandleInformation for stdout read pipe"));
+    print_last_error("SetHandleInformation for stdout read pipe",
+                     sizeof("SetHandleInformation for stdout read pipe") - 1);
     return EXIT_FAILURE;
   }
 
   // Create a pipe for the child process's STDIN.
   if (CreatePipe(&pipe_stdin_read, &pipe_stdin_write, &security_attributes, 0) == FALSE) {
-    print_last_error("CreatePipe for stdin", sizeof("CreatePipe for stdin"));
+    print_last_error("CreatePipe for stdin", sizeof("CreatePipe for stdin") - 1);
     return EXIT_FAILURE;
   }
 
   // Ensure the write handle to the pipe for STDIN is not inherited.
   if (SetHandleInformation(pipe_stdin_write, HANDLE_FLAG_INHERIT, 0) == FALSE) {
-    print_last_error("SetHandleInformation for stdin write pipe", sizeof("SetHandleInformation for stdin write pipe"));
+    print_last_error("SetHandleInformation for stdin write pipe",
+                     sizeof("SetHandleInformation for stdin write pipe") - 1);
     return EXIT_FAILURE;
   }
 
@@ -86,7 +88,7 @@ int main(int argc, char* argv[]) {
   startup_info.hStdOutput = pipe_stdout_write;
   startup_info.hStdInput = pipe_stdin_read;
   startup_info.dwFlags |= STARTF_USESTDHANDLES;
-  
+
   PROCESS_INFORMATION process_information = {};
 
   // Create the child process.
@@ -104,7 +106,7 @@ int main(int argc, char* argv[]) {
 
   // If an error occurs, exit the application.
   if (create_process_success == FALSE) {
-    print_last_error("CreateProcess", sizeof("CreateProcess"));
+    print_last_error("CreateProcess", sizeof("CreateProcess") - 1);
     return EXIT_FAILURE;
   } else {
     CloseHandle(process_information.hProcess);
@@ -168,13 +170,13 @@ int main(int argc, char* argv[]) {
 
   HANDLE accessible_child = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, process_information.dwProcessId);
   if (accessible_child == nullptr) {
-    print_last_error("OpenProcess", sizeof("OpenProcess"));
+    print_last_error("OpenProcess", sizeof("OpenProcess") - 1);
     return EXIT_FAILURE;
   }
 
   DWORD exit_code = 0;
   if (GetExitCodeProcess(accessible_child, &exit_code) == 0) {
-    print_last_error("GetExitCodeProcess", sizeof("GetExitCodeProcess"));
+    print_last_error("GetExitCodeProcess", sizeof("GetExitCodeProcess") - 1);
     return EXIT_FAILURE;
   }
 
