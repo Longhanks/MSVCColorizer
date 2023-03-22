@@ -9,7 +9,7 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_ALL_CAPS)
 cmake_policy(SET CMP0091 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-project(cpp_playground LANGUAGES CXX)
+project(MSVCColorizer LANGUAGES CXX)
 
 add_executable(MSVCColorizer
   src/cmdline.cpp
@@ -47,10 +47,6 @@ if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
       -D_ITERATOR_DEBUG_LEVEL=2
       -DDEBUG
       -D_DEBUG
-  )
-  target_compile_options(MSVCColorizer
-    PRIVATE
-      /fsanitize=address
   )
   target_link_options(MSVCColorizer
     PRIVATE

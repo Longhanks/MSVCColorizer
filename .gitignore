@@ -73,3 +73,6 @@ ipch/
 
 # Build
 /*build*
+
+# CMake user presets
+/CMakeUserPresets.json
