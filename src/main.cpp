@@ -142,32 +142,27 @@ void do_print(std::string str, bool to_stderr = false) {
 }
 
 /*!
- * @brief Format a readable error message, display a message box, and exit from the application.
- * @param prefix UTF-8 encoded std::string used as prefix
+ * @brief Print GetLastError() as a readable error message
+ * @param prefix UTF-8 encoded const char* used as prefix
  */
-[[noreturn]] void print_error_and_exit(std::string prefix) {
-  void* msg = nullptr;
+void print_error(const char* prefix, const size_t prefix_size) {
+  HANDLE handle_stderr = GetStdHandle(STD_ERROR_HANDLE);
+  wchar_t* msg = nullptr;
   void* msg_wchar = &msg;
   const DWORD dw = GetLastError();
 
   FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
                  dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), static_cast<wchar_t*>(msg_wchar), 0, nullptr);
 
-  const size_t msg_size = wcslen(static_cast<const wchar_t*>(msg));
-  std::vector<char> utf8_buf;
-  int utf8_bufsize =
-      WideCharToMultiByte(CP_UTF8, 0, static_cast<const wchar_t*>(msg),
-                          static_cast<int>(static_cast<ptrdiff_t>(msg_size)), nullptr, 0, nullptr, nullptr);
-  utf8_buf.resize(static_cast<size_t>(static_cast<unsigned int>(utf8_bufsize)) + 1);
-  utf8_bufsize = WideCharToMultiByte(CP_UTF8, 0, static_cast<const wchar_t*>(msg),
-                                     static_cast<int>(static_cast<ptrdiff_t>(msg_size)), std::data(utf8_buf),
-                                     static_cast<int>(static_cast<ptrdiff_t>(utf8_bufsize)), nullptr, nullptr);
-  utf8_buf[static_cast<size_t>(static_cast<unsigned int>(utf8_bufsize))] = 0;
+  const size_t msg_size = wcslen(msg);
+  std::string msg_utf8 = utf8_from_utf16(msg, msg_size);
 
-  do_print(std::move(prefix) + " failed with error: " + std::data(utf8_buf) + "\n", true);
+  WriteFile(handle_stderr, prefix, static_cast<DWORD>(prefix_size), nullptr, nullptr);
+  WriteFile(handle_stderr, " failed with error: ", sizeof(" failed with error: "), nullptr, nullptr);
+  WriteFile(handle_stderr, msg_utf8.data(), static_cast<DWORD>(std::size(msg_utf8)), nullptr, nullptr);
+  WriteFile(handle_stderr, "\n", sizeof("\n"), nullptr, nullptr);
 
   LocalFree(msg);
-  ExitProcess(EXIT_FAILURE);
 }
 
 int main(int argc, char* argv[]) {
@@ -178,18 +173,22 @@ int main(int argc, char* argv[]) {
 
   wchar_t* cmdline = GetCommandLineW();
   if (cmdline == nullptr) {
-    print_error_and_exit("GetCommandLineW");
+    print_error("GetCommandLineW", sizeof("GetCommandLineW"));
+    return EXIT_FAILURE;
   }
 
   const auto [cmdline_calc_offset_result, cmdline_skip] = calculate_offset(cmdline);
 
   switch (cmdline_calc_offset_result) {
     case CmdLineCalcOffsetResult::commandLineToArgvWFailed: {
-      print_error_and_exit("CommandLineToArgvW");
+      print_error("CommandLineToArgvW", sizeof("CommandLineToArgvW"));
+      return EXIT_FAILURE;
     }
     case CmdLineCalcOffsetResult::notEnoughArguments: {
-      do_print("Not enough arguments: Give me a program\n", true);
-      ExitProcess(1);
+      HANDLE handle_stderr = GetStdHandle(STD_ERROR_HANDLE);
+      WriteFile(handle_stderr, "Not enough arguments: Give me a program\n",
+                sizeof("Not enough arguments: Give me a program\n"), nullptr, nullptr);
+      return EXIT_FAILURE;
     }
     case CmdLineCalcOffsetResult::success: {
     }
@@ -207,22 +206,26 @@ int main(int argc, char* argv[]) {
 
   // Create a pipe for the child process's STDOUT.
   if (CreatePipe(&pipe_stdout_read, &pipe_stdout_write, &security_attributes, 0) == FALSE) {
-    print_error_and_exit("StdoutRd CreatePipe");
+    print_error("CreatePipe for stdout", sizeof("CreatePipe for stdout"));
+    return EXIT_FAILURE;
   }
 
   // Ensure the read handle to the pipe for STDOUT is not inherited.
   if (SetHandleInformation(pipe_stdout_read, HANDLE_FLAG_INHERIT, 0) == FALSE) {
-    print_error_and_exit("Stdout SetHandleInformation");
+    print_error("SetHandleInformation for stdout read pipe", sizeof("SetHandleInformation for stdout read pipe"));
+    return EXIT_FAILURE;
   }
 
   // Create a pipe for the child process's STDIN.
   if (CreatePipe(&pipe_stdin_read, &pipe_stdin_write, &security_attributes, 0) == FALSE) {
-    print_error_and_exit("Stdin CreatePipe");
+    print_error("CreatePipe for stdin", sizeof("CreatePipe for stdin"));
+    return EXIT_FAILURE;
   }
 
   // Ensure the write handle to the pipe for STDIN is not inherited.
   if (SetHandleInformation(pipe_stdin_write, HANDLE_FLAG_INHERIT, 0) == FALSE) {
-    print_error_and_exit("Stdin SetHandleInformation");
+    print_error("SetHandleInformation for stdin write pipe", sizeof("SetHandleInformation for stdin write pipe"));
+    return EXIT_FAILURE;
   }
 
   // Create the child process.
@@ -256,7 +259,8 @@ int main(int argc, char* argv[]) {
 
   // If an error occurs, exit the application.
   if (create_process_success == FALSE) {
-    print_error_and_exit("CreateProcess");
+    print_error("CreateProcess", sizeof("CreateProcess"));
+    return EXIT_FAILURE;
   } else {
     CloseHandle(process_information.hProcess);
     CloseHandle(process_information.hThread);
@@ -317,13 +321,13 @@ int main(int argc, char* argv[]) {
 
   HANDLE accessible_child = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, process_information.dwProcessId);
   if (accessible_child == nullptr) {
-    print_error_and_exit("OpenProcess");
+    print_error("OpenProcess", sizeof("OpenProcess"));
     return EXIT_FAILURE;
   }
 
   DWORD exit_code = 0;
   if (GetExitCodeProcess(accessible_child, &exit_code) == 0) {
-    print_error_and_exit("GetExitCodeProcess");
+    print_error("GetExitCodeProcess", sizeof("GetExitCodeProcess"));
     return EXIT_FAILURE;
   }
 
