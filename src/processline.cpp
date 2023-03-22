@@ -5,7 +5,37 @@
 static void print_with_color(const char* str, size_t str_size, const size_t diagnostic_str_size,
                              const size_t diagnostic_str_index, const char* color_str, size_t color_str_size,
                              HANDLE out) {
-  WriteFile(out, str, static_cast<DWORD>(diagnostic_str_index), nullptr, nullptr);
+  const size_t idx_brace_close = diagnostic_str_index - 3;
+  const size_t idx_comma = [str, idx_brace_close]() -> size_t {
+    size_t idx_comma_ = idx_brace_close;
+    while (str[idx_comma_] != ',') {
+      idx_comma_ -= 1;
+      if (str[idx_comma_] == '(') {
+        return static_cast<size_t>(-1);
+      }
+    }
+    return idx_comma_;
+  }();
+  const size_t idx_brace_open = [str, idx_brace_close, idx_comma]() -> size_t {
+    size_t idx_brace_open_ = idx_brace_close;
+    if (idx_comma == static_cast<size_t>(-1)) {
+      idx_brace_open_ = idx_brace_close;
+    }
+    while (str[idx_brace_open_] != '(') {
+      idx_brace_open_ -= 1;
+    }
+    return idx_brace_open_;
+  }();
+  WriteFile(out, str, static_cast<DWORD>(idx_brace_open), nullptr, nullptr);
+  WriteFile(out, ":", 1, nullptr, nullptr);
+  if (idx_comma != static_cast<size_t>(-1)) {
+    WriteFile(out, str + idx_brace_open + 1, static_cast<DWORD>(idx_comma - idx_brace_open - 1), nullptr, nullptr);
+    WriteFile(out, ":", 1, nullptr, nullptr);
+    WriteFile(out, str + idx_comma + 1, static_cast<DWORD>(idx_brace_close - idx_comma - 1), nullptr, nullptr);
+  } else {
+    WriteFile(out, str + idx_brace_open + 1, static_cast<DWORD>(idx_brace_close - idx_brace_open - 1), nullptr, nullptr);
+  }
+  WriteFile(out, ": ", 2, nullptr, nullptr);
   WriteFile(out, color_str, static_cast<DWORD>(color_str_size), nullptr, nullptr);
   WriteFile(out, str + diagnostic_str_index, static_cast<DWORD>(diagnostic_str_size), nullptr, nullptr);
   WriteFile(out, "\033[0m", sizeof("\033[0m") - 1, nullptr, nullptr);
