@@ -52,10 +52,20 @@ if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
     PRIVATE
       /fsanitize=address
   )
+  target_link_options(MSVCColorizer
+    PRIVATE
+      /nodefaultlib:libucrtd.lib
+      /defaultlib:ucrtd.lib
+  )
 elseif("${BUILD_TYPE_ALL_CAPS}" STREQUAL "RELEASE")
   target_compile_definitions(MSVCColorizer
     PUBLIC
       -DNDEBUG
+  )
+  target_link_options(MSVCColorizer
+    PRIVATE
+      /nodefaultlib:libucrt.lib
+      /defaultlib:ucrt.lib
   )
 endif()
 
