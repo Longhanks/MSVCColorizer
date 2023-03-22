@@ -1,0 +1,29 @@
+{
+    "VsCodeTaskButtons.tasks": [
+        {
+            "label": "$(debug-configure) cmake",
+            "task": "cmake configure",
+            "tooltip": "cmake configure"
+        },
+        {
+            "label": "$(symbol-property) Build",
+            "task": "build current target",
+            "tooltip": "build current target"
+        },
+        {
+            "label": "$(notebook-delete-cell) Clean",
+            "task": "clean",
+            "tooltip": "clean"
+        },
+        {
+            "label": "$(testing-run-icon) Run",
+            "task": "run",
+            "tooltip": "run"
+        },
+        {
+            "label": "$(testing-debug-icon) Debug",
+            "task": "debug",
+            "tooltip": "debug"
+        }
+    ]
+}

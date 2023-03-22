@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "x64-Debug-base",
+      "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-x64-Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x64-Debug-win32",
+      "displayName": "x64-Debug",
+      "inherits": "x64-Debug-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "environment": {
+        "CLICOLOR_FORCE": "1"
+      },
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "x64-Debug-linux",
+      "displayName": "x64-Debug",
+      "inherits": "x64-Debug-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "x64-Release-base",
+      "hidden": true,
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-x64-Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "x64-Release-win32",
+      "displayName": "x64-Release",
+      "inherits": "x64-Release-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "environment": {
+        "CLICOLOR_FORCE": "1"
+      },
+      "toolset": {
+        "value": "v143,host=x64",
+        "strategy": "external"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "x64-Release-linux",
+      "displayName": "x64-Release",
+      "inherits": "x64-Release-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "x64-Debug-win32",
+      "displayName": "x64-Debug",
+      "configurePreset": "x64-Debug-win32",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "x64-Debug-linux",
+      "displayName": "x64-Debug",
+      "configurePreset": "x64-Debug-linux",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "x64-Release-win32",
+      "displayName": "x64-Release",
+      "configurePreset": "x64-Release-win32",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "x64-Release-linux",
+      "displayName": "x64-Release",
+      "configurePreset": "x64-Release-linux",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    }
+  ]
+}

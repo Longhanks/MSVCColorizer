@@ -1,0 +1,49 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cmake configure",
+            "type": "cmake",
+            "command": "configure",
+            "problemMatcher": [],
+            "detail": "Runs cmake and configures the project."
+        },
+        {
+            "label": "clean",
+            "type": "cmake",
+            "command": "clean",
+            "problemMatcher": [],
+            "detail": "Clean the output directory via cmake."
+        },
+        {
+            "label": "build current target",
+            "type": "cmake",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "command": "build",
+            "targets": [
+                "${command:cmake.buildTargetName}"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "close": false,
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "debug",
+            "command": "${command:workbench.action.debug.start}",
+        },
+        {
+            "label": "run",
+            "command": "${command:workbench.action.debug.run}",
+        }
+    ]
+}
