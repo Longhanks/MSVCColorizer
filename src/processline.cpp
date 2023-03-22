@@ -19,14 +19,14 @@ void process_line(std::string&& str, HANDLE out) {
   const char* fatal_link_error = strstr(c_str, ": fatal error LNK");
   if (fatal_link_error != nullptr) {
     print_with_color(c_str, std::size(str), sizeof("fatal error LNK") + 5 - 1,
-                     static_cast<size_t>(fatal_link_error - c_str) + 2, "\033[31;1m", sizeof("\033[31;1m") - 1, out);
+                     static_cast<size_t>(fatal_link_error - c_str) + 2, "\033[31m", sizeof("\033[31m") - 1, out);
     return;
   }
 
   const char* fatal_error = strstr(c_str, ": fatal error C");
   if (fatal_error != nullptr) {
     print_with_color(c_str, std::size(str), sizeof("fatal error C") + 5 - 1,
-                     static_cast<size_t>(fatal_error - c_str) + 2, "\033[31;1m", sizeof("\033[31;1m") - 1, out);
+                     static_cast<size_t>(fatal_error - c_str) + 2, "\033[31m", sizeof("\033[31m") - 1, out);
 
     return;
   }
@@ -34,7 +34,7 @@ void process_line(std::string&& str, HANDLE out) {
   const char* error = strstr(c_str, ": error C");
   if (error != nullptr) {
     print_with_color(c_str, std::size(str), sizeof("error C") + 5 - 1, static_cast<size_t>(error - c_str) + 2,
-                     "\033[31;1m", sizeof("\033[31;1m") - 1, out);
+                     "\033[31m", sizeof("\033[31m") - 1, out);
 
     return;
   }
@@ -42,15 +42,15 @@ void process_line(std::string&& str, HANDLE out) {
   const char* warning = strstr(c_str, ": warning C");
   if (warning != nullptr) {
     print_with_color(c_str, std::size(str), sizeof("warning C") + 5 - 1, static_cast<size_t>(warning - c_str) + 2,
-                     "\033[33;1m", sizeof("\033[33;1m") - 1, out);
+                     "\033[33m", sizeof("\033[33m") - 1, out);
 
     return;
   }
 
   const char* note = strstr(c_str, ": note:");
   if (note != nullptr) {
-    print_with_color(c_str, std::size(str), sizeof("note") + 1 - 1, static_cast<size_t>(note - c_str) + 2, "\033[35;1m",
-                     sizeof("\033[35;1m") - 1, out);
+    print_with_color(c_str, std::size(str), sizeof("note") + 1 - 1, static_cast<size_t>(note - c_str) + 2, "\033[35m",
+                     sizeof("\033[35m") - 1, out);
 
     return;
   }
