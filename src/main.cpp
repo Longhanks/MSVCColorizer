@@ -2,13 +2,9 @@
 #include "consolecp.h"
 #include "printlasterror.h"
 #include "processline.h"
-#include "utfconvert.h"
 
 // WINAPI
-#pragma warning(push)
-#pragma warning(disable : 5039)  // pointer or reference to potentially throwing function passed to 'extern "C"'
 #include <Windows.h>
-#pragma warning(pop)
 
 #include <algorithm>
 #include <iterator>
@@ -23,17 +19,17 @@ int main(int argc, char* argv[]) {
 
   ConsoleCPRestorator cp_restorator;
 
-  wchar_t* cmdline = GetCommandLineW();
+  char* cmdline = GetCommandLineA();
   if (cmdline == nullptr) {
-    print_last_error("GetCommandLineW", sizeof("GetCommandLineW") - 1);
+    print_last_error("GetCommandLineA", sizeof("GetCommandLineA") - 1);
     return EXIT_FAILURE;
   }
 
   const auto [cmdline_calc_offset_result, cmdline_skip] = calculate_offset(cmdline);
 
   switch (cmdline_calc_offset_result) {
-    case CmdLineCalcOffsetResult::commandLineToArgvWFailed: {
-      print_last_error("CommandLineToArgvW", sizeof("CommandLineToArgvW") - 1);
+    case CmdLineCalcOffsetResult::commandLineToArgvAFailed: {
+      print_last_error("CommandLineToArgvA", sizeof("CommandLineToArgvA") - 1);
       return EXIT_FAILURE;
     }
     case CmdLineCalcOffsetResult::notEnoughArguments: {
@@ -82,8 +78,8 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  STARTUPINFOW startup_info = {};
-  startup_info.cb = sizeof(STARTUPINFOW);
+  STARTUPINFOA startup_info = {};
+  startup_info.cb = sizeof(STARTUPINFOA);
   startup_info.hStdError = pipe_stdout_write;
   startup_info.hStdOutput = pipe_stdout_write;
   startup_info.hStdInput = pipe_stdin_read;
@@ -93,7 +89,7 @@ int main(int argc, char* argv[]) {
 
   // Create the child process.
   BOOL create_process_success = FALSE;
-  create_process_success = CreateProcessW(nullptr,
+  create_process_success = CreateProcessA(nullptr,
                                           cmdline + cmdline_skip,  // command line
                                           nullptr,                 // process security attributes
                                           nullptr,                 // primary thread security attributes
@@ -106,7 +102,7 @@ int main(int argc, char* argv[]) {
 
   // If an error occurs, exit the application.
   if (create_process_success == FALSE) {
-    print_last_error("CreateProcess", sizeof("CreateProcess") - 1);
+    print_last_error("CreateProcessA", sizeof("CreateProcessA") - 1);
     return EXIT_FAILURE;
   } else {
     CloseHandle(process_information.hProcess);

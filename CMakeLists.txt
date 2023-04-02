@@ -11,13 +11,19 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 project(MSVCColorizer LANGUAGES CXX)
 
+foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+  string(REPLACE "/W3" "" ${flag_var} "${${flag_var}}")
+  string(REPLACE "/EHc" "" ${flag_var} "${${flag_var}}")
+  string(REPLACE "/EHsc" "" ${flag_var} "${${flag_var}}")
+  string(REPLACE "/GR" "" ${flag_var} "${${flag_var}}")
+endforeach()
+
 add_executable(MSVCColorizer
   src/cmdline.cpp
   src/consolecp.cpp
   src/main.cpp
   src/printlasterror.cpp
   src/processline.cpp
-  src/utfconvert.cpp
   MSVCColorizer.manifest
 )
 
@@ -36,9 +42,9 @@ target_compile_definitions(MSVCColorizer
     -D_WIN32_WINNT=0x0A00       # _WIN32_WINNT_WIN10
     -DNTDDI_VERSION=0x0A00000B  # NTDDI_WIN10_CO
     -DWINVER=0x0A00             # _WIN32_WINNT_WIN10
-  PRIVATE
     -DWIN32_LEAN_AND_MEAN
     -DVC_EXTRALEAN
+    -D_HAS_EXCEPTIONS=0
 )
 
 if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
@@ -70,12 +76,16 @@ target_compile_options(MSVCColorizer
     /Zc:__cplusplus
     /utf-8
     /diagnostics:caret
+    /EHa-
+    /EHs-
+    /GR-
     /Wall
+    /wd4577 # 'noexcept' used with no exception handling mode specified
     /wd4710 # function not inlined despite inline
     /wd4711 # function inlined despite no inline
 )
 
-target_link_libraries(MSVCColorizer
-  PUBLIC
-    Shell32
+target_link_options(MSVCColorizer
+  PRIVATE
+    /DEPENDENTLOADFLAG:0x800
 )

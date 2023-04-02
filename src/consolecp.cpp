@@ -1,10 +1,7 @@
 #include "consolecp.h"
 
 // WINAPI
-#pragma warning(push)
-#pragma warning(disable : 5039)  // pointer or reference to potentially throwing function passed to 'extern "C"'
 #include <Windows.h>
-#pragma warning(pop)
 
 // MSVCRT
 #include <fcntl.h>
