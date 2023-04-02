@@ -7,7 +7,11 @@ endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_ALL_CAPS)
 
 cmake_policy(SET CMP0091 NEW)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "MINSIZEREL")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+else()
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 project(MSVCColorizer LANGUAGES CXX)
 
@@ -59,7 +63,7 @@ if("${BUILD_TYPE_ALL_CAPS}" STREQUAL "DEBUG")
       /nodefaultlib:libucrtd.lib
       /defaultlib:ucrtd.lib
   )
-elseif("${BUILD_TYPE_ALL_CAPS}" STREQUAL "RELEASE")
+else()
   target_compile_definitions(MSVCColorizer
     PUBLIC
       -DNDEBUG
