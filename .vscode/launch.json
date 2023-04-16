@@ -17,6 +17,23 @@
             "internalConsoleOptions": "openOnSessionStart",
             "logging": {
                 "threadExit": true
+            },
+            "windows": {
+                "symbolOptions": {
+                    "searchPaths": [
+                        "https://msdl.microsoft.com/download/symbols"
+                    ],
+                    "searchMicrosoftSymbolServer": true,
+                    "moduleFilter": {
+                        "mode": "loadAllButExcluded",
+                        "excludedModules": []
+                    }
+                },
+                "sourceFileMap": {
+                    "D:/a/_work/1/s/src/vctools/crt/vcstartup/src/startup": "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.35.32215/crt/src/vcruntime",
+                    "D:/a/_work/1/s/src/vctools/VC7Libs/Ship/ATLMFC": "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.35.32215/atlmfc",
+                    "minkernel/crts/ucrt/src/appcrt": "C:/Program Files (x86)/Windows Kits/10/Source/10.0.22621.0/ucrt"
+                },
             }
         }
     ]
