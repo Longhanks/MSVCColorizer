@@ -2,51 +2,41 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "x64-Debug",
+      "name": "base",
+      "hidden": true,
       "architecture": {
         "value": "x64",
         "strategy": "external"
       },
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-x64-Debug",
+      "binaryDir": "${sourceDir}/build-${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_CXX_COMPILER": "cl.exe"
       },
       "toolset": {
         "value": "v143,host=x64",
         "strategy": "external"
+      }
+    },
+    {
+      "name": "x64-Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
       "name": "x64-Release",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-x64-Release",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
-      },
-      "toolset": {
-        "value": "v143,host=x64",
-        "strategy": "external"
       }
     },
     {
       "name": "x64-MinSizeRel",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-x64-MinSizeRel",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "MinSizeRel"
-      },
-      "toolset": {
-        "value": "v143,host=x64",
-        "strategy": "external"
       }
     }
   ],
