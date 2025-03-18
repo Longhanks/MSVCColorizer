@@ -1,3 +1,3 @@
 CompileFlags:
-  Add: [-DMSVCCOLORIZER_NO_MODULES=1, -Wno-c++98-compat, -Wno-c++98-compat-pedantic, -Wno-unsafe-buffer-usage-in-libc-call]
+  Add: [-DMSVCCOLORIZER_NO_MODULES=1, -std:c++latest, -Wno-c++98-compat, -Wno-c++98-compat-pedantic, -Wno-unsafe-buffer-usage-in-libc-call]
   Remove: [-fmodules-ts, -fmodule-mapper=*, -fdeps-format=*]
