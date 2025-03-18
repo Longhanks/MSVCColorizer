@@ -1,6 +1,3 @@
-# Prerequisites
-*.d
-
 # Compiled Object files
 *.slo
 *.lo
@@ -30,6 +27,7 @@
 *.exe
 *.out
 *.app
+!/tools/MSVCColorizer.exe
 
 # Python cache
 __pycache__/
@@ -65,14 +63,23 @@ ipch/
 # Visual Studio default output dir
 /out/
 
-# JetBrains IDE settings
+# JetBrains
 /.idea/
+
+# VS Code
+/.vscode/
 
 # Qt Creator
 /CMakeLists.txt.user
 
-# Build
-/*build*
-
 # CMake user presets
 /CMakeUserPresets.json
+
+# Auto-generated compile_commands.json
+/compile_commands.json
+
+# clangd cache
+/.cache/
+
+# top level files or directories that contain build
+/*build*

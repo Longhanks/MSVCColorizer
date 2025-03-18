@@ -1,20 +1,25 @@
-#include "cmdline.h"
+#ifdef MSVCCOLORIZER_NO_MODULES
+#include "cmdline.cppm"
 
-// WINAPI
-#include <Windows.h>
+#include "syslibs.cppm"
+#else
+module cmdline;
+
+import syslibs;
+#endif  // MSVCCOLORIZER_NO_MODULES
 
 static char** MSVCColorizerCommandLineToArgvA(const char* const cmdline, int* out_count_args) {
   if (out_count_args == nullptr) {
-    SetLastError(ERROR_INVALID_PARAMETER);
+    SetLastError(syslibs::error_invalid_parameter);
     return nullptr;
   }
 
   char** argv_out = nullptr;
   if (*cmdline == 0) {
-    DWORD size_outbuf_targetindex = MAX_PATH;
+    DWORD size_outbuf_targetindex = syslibs::max_path;
     DWORD size_outbuf = sizeof(char*) * 2 + size_outbuf_targetindex;
     while (true) {
-      argv_out = (static_cast<char**>(LocalAlloc(LMEM_FIXED, size_outbuf)));
+      argv_out = (static_cast<char**>(LocalAlloc(syslibs::lmem_fixed, size_outbuf)));
       if (argv_out == nullptr) {
         return nullptr;
       }
@@ -97,12 +102,13 @@ static char** MSVCColorizerCommandLineToArgvA(const char* const cmdline, int* ou
     }
   }
 
-  argv_out = static_cast<char**>(LocalAlloc(LMEM_FIXED, (argc + 1) * sizeof(char*) + (strlen(cmdline) + 1)));
+  argv_out =
+      static_cast<char**>(LocalAlloc(syslibs::lmem_fixed, (argc + 1) * sizeof(char*) + (std::strlen(cmdline) + 1)));
   if (argv_out == nullptr) {
     return nullptr;
   }
 
-  strcpy_s(static_cast<char*>(static_cast<void*>(argv_out + argc + 1)), (strlen(cmdline) + 1), cmdline);
+  strcpy_s(static_cast<char*>(static_cast<void*>(argv_out + argc + 1)), (std::strlen(cmdline) + 1), cmdline);
   argv_out[0] = static_cast<char*>(static_cast<void*>(argv_out + argc + 1));
 
   char* char_it = argv_out[0];
@@ -198,21 +204,21 @@ static char** MSVCColorizerCommandLineToArgvA(const char* const cmdline, int* ou
   return argv_out;
 }
 
-std::pair<CmdLineCalcOffsetResult, size_t> calculate_offset(char* cmdline) {
+std::pair<CmdLineCalcOffsetResult, std::size_t> calculate_offset(char* cmdline) {
   int argc_ = 0;
   char** argv_ = MSVCColorizerCommandLineToArgvA(cmdline, &argc_);
   if (argv_ == nullptr) {
     LocalFree(argv_);
-    return {CmdLineCalcOffsetResult::commandLineToArgvAFailed, static_cast<size_t>(-1)};
+    return {CmdLineCalcOffsetResult::commandLineToArgvAFailed, static_cast<std::size_t>(-1)};
   }
   if (argc_ <= 1) {
     LocalFree(argv_);
-    return {CmdLineCalcOffsetResult::notEnoughArguments, static_cast<size_t>(-1)};
+    return {CmdLineCalcOffsetResult::notEnoughArguments, static_cast<std::size_t>(-1)};
   }
 
-  const size_t idx_argv0 = static_cast<size_t>(strstr(cmdline, argv_[0]) - cmdline);
-  const size_t cmdline_skip = [cmdline, argv_, idx_argv0]() -> size_t {
-    size_t cmdline_skip_ = strlen(argv_[0]) + (2 * idx_argv0) + 1;
+  const std::size_t idx_argv0 = static_cast<std::size_t>(std::strstr(cmdline, argv_[0]) - cmdline);
+  const std::size_t cmdline_skip = [cmdline, argv_, idx_argv0]() -> std::size_t {
+    std::size_t cmdline_skip_ = std::strlen(argv_[0]) + (2 * idx_argv0) + 1;
     while (cmdline[cmdline_skip_] == ' ') {
       cmdline_skip_ += 1;
     }

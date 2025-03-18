@@ -1,5 +1,10 @@
 {
-  "version": 3,
+  "version": 10,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 6
+  },
   "configurePresets": [
     {
       "name": "base",
@@ -11,10 +16,15 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build-${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "cl.exe"
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "1"
+      },
+      "environment": {
+        "CLICOLOR_FORCE": "1",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "${sourceDir}/tools/MSVCColorizer.exe"
       },
       "toolset": {
-        "value": "v143,host=x64",
+        "value": "v143,host=x64,version=14.43.34808",
         "strategy": "external"
       }
     },

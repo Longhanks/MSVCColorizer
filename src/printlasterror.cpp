@@ -1,20 +1,25 @@
-#include "printlasterror.h"
+#ifdef MSVCCOLORIZER_NO_MODULES
+#include "printlasterror.cppm"
 
-// WINAPI
-#include <Windows.h>
+#include "syslibs.cppm"
+#else
+module printlasterror;
 
-#include <string>
+import syslibs;
+#endif  // MSVCCOLORIZER_NO_MODULES
 
-void print_last_error(const char* prefix, const size_t prefix_size) {
-  HANDLE handle_stderr = GetStdHandle(STD_ERROR_HANDLE);
+void print_last_error(const char* prefix, const std::size_t prefix_size) {
+  HANDLE handle_stderr = GetStdHandle(syslibs::std_error_handle);
   char* msg = nullptr;
   void* msg_char = &msg;
   const DWORD dw = GetLastError();
 
-  FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr,
-                 dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), static_cast<char*>(msg_char), 0, nullptr);
+  FormatMessageA(syslibs::format_message_allocate_buffer | syslibs::format_message_from_system |
+                     syslibs::format_message_ignore_inserts,
+                 nullptr, dw, syslibs::makelangid(syslibs::lang_neutral, syslibs::sublang_default),
+                 static_cast<char*>(msg_char), 0, nullptr);
 
-  const size_t msg_size = strlen(msg);
+  const std::size_t msg_size = std::strlen(msg);
 
   WriteFile(handle_stderr, prefix, static_cast<DWORD>(prefix_size), nullptr, nullptr);
   WriteFile(handle_stderr, " failed with error: ", sizeof(" failed with error: ") - 1, nullptr, nullptr);
